@@ -23,7 +23,7 @@ log() { echo "[run-binary] $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2; }
 : "${SEARCH_MAX_BATCH:=1024}"
 
 mkdir -p "$LOG_DIR"
-# timestamp=$(date +%Y%m%d_%H%M%S)
+timestamp=$(date +%Y%m%d_%H%M%S)
 output_csv="$LOG_DIR/${MODEL_NAME}_bench_${timestamp}.csv"
 
 # ==================== 解析指标 ====================
