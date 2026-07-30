@@ -1,16 +1,11 @@
-# 模型参数配置，可以自动覆盖下发模型启动命令参数
-export MODEL_PATH="/data/models/Qwen3.6-35B-A3B/"
-export MODEL_NAME=$(basename "$MODEL_PATH")
+source configs/config-base.sh
+# 模型服务参数配置
+export MODEL_PATH="/data1/models/Qwen3.6-27B"
 export PORT=8009
-export TP=2
-# 手动修改
+export TP=2,4 # 2,4
+export IMAGE="harbor.sourcefind.cn:5443/dcu/admin/base/sglang:0.5.10rc0-ubuntu22.04-dtk26.04-py3.10"
 export BACKEND="sglang"
 export DATA_TYPE="bf16"
-# 镜像容器配置
-export IMAGE="harbor.sourcefind.cn:5443/dcu/admin/base/sglang:0.5.10rc0-ubuntu22.04-dtk26.04-py3.10"
-export WORKDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-export CONTAINER_NAME="he-bench-${MODEL_NAME}"
-#模型启动命令
 export CMD=$(cat <<'EOF'
 export SGLANG_USE_LIGHTOP=1
 export SGLANG_USE_MARLIN_W16A16_MOE=1
@@ -45,18 +40,23 @@ sglang serve\
     --kv-cache-dtype fp8_e5m2 
 EOF
 )
-# 测试配置
-tag="${IMAGE##*:}"
-config_file_name=$(basename "${BASH_SOURCE[0]}" .sh)
-export LOG_DIR="./${MODEL_NAME}-${tag}-${config_file_name}"
-
-export BATCH_SIZES="[1,4,8,16,32,64,128]"
-export CASE_PAIR="[[512,512],[4096,1024],[16384,1024]]"
-# export METRICS="Mean TTFT (ms),Mean TPOT (ms),Output token throughput (tok/s),Total token throughput (tok/s)"
-export METRICS="Mean TTFT (ms),Mean TPOT (ms),Output token throughput (tok/s),Total token throughput (tok/s),P99 TTFT (ms),P99 TPOT (ms),Acceptance rate (%),Acceptance length"
+export BATCH_SIZES="[1,4]"
+export CASE_PAIR="[[256,256]]"
+export METRICS="Mean TTFT (ms),Mean TPOT (ms),Output token throughput (tok/s),Total token throughput (tok/s)"
+# export BATCH_SIZES="[1,4,8,16,32,64,128]"
+# export CASE_PAIR="[[512,512],[4096,1024],[16384,1024]]"
+# export METRICS="Mean TTFT (ms),Mean TPOT (ms),Output token throughput (tok/s),Total token throughput (tok/s),P99 TTFT (ms),P99 TPOT (ms),Acceptance rate (%),Acceptance length"
 
 # 搜索模式参数（若设置 SEARCH_METRICS 和 SEARCH_THRESHOLDS 则启用搜索，否则为固定模式）
 # export SEARCH_METRICS="Mean TTFT (ms),Mean TPOT (ms)"   # 监控的延迟指标，逗号分隔
-# export SEARCH_THRESHOLDS="100,50"                       # 对应每个指标的阈值（毫秒）
+# export SEARCH_THRESHOLDS="2000,20"                      # 对应每个指标的阈值（毫秒）
 # export SEARCH_START_BATCH=1                             # 起始并发数
-# export SEARCH_MAX_BATCH=1024                            # 最大尝试并发数
+# export SEARCH_MAX_BATCH=32  
+                          # 最大尝试并发数
+# 其他配置
+tag="${IMAGE##*:}"
+config_file_name=$(basename "${BASH_SOURCE[0]}" .sh)
+export MODEL_NAME=$(basename "$MODEL_PATH")
+export LOG_DIR="./${SAVE_DIR}/${MODEL_NAME}-${tag}-${config_file_name}"
+export WORKDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+export CONTAINER_NAME="bench-${MODEL_NAME}-${config_file_name}"

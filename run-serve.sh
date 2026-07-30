@@ -12,6 +12,10 @@
 : "${TP:=2-}"
 : "${BACKEND:=vllm-}"
 : "${CMD:=}"
+
+IFS=',' read -r -a tp_list <<< "$TP"
+TP=${tp_list[0]}
+
 if [[ -n "$CMD" ]]; then
     CMD="$CMD"
 else
@@ -55,9 +59,8 @@ esac
 CMD="$EXPORT_LINES"$'\n'"$CMD"
 echo $CMD
 
-mkdir -p $WORKDIR/$LOG_DIR
+mkdir -p $LOG_DIR
 docker run -itd \
-    --network=host \
     --privileged \
     --device=/dev/kfd --device=/dev/dri --device=/dev/mkfd \
     --ipc=host --shm-size=512G \
@@ -70,4 +73,5 @@ docker run -itd \
     -v $MODEL_PATH:$MODEL_PATH \
     --name="$CONTAINER_NAME" \
     "$IMAGE" \
-    /bin/bash -c "$CMD 2>&1 | tee $WORKDIR/$LOG_DIR/serve.log "
+    /bin/bash -c "echo $CMD 2>&1 | tee $WORKDIR/$LOG_DIR/serve.log "
+    # /bin/bash -c "$CMD 2>&1 | tee $WORKDIR/$LOG_DIR/serve.log "

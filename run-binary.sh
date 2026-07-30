@@ -22,6 +22,9 @@ log() { echo "[run-binary] $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2; }
 : "${SEARCH_START_BATCH:=1}"
 : "${SEARCH_MAX_BATCH:=1024}"
 
+IFS=',' read -r -a tp_list <<< "$TP"
+TP=${tp_list[0]}
+
 mkdir -p "$LOG_DIR"
 timestamp=$(date +%Y%m%d_%H%M%S)
 output_csv="$LOG_DIR/${MODEL_NAME}_bench_${timestamp}.csv"
@@ -107,7 +110,8 @@ run_one_test() {
     fi
 
     log "Executing: $cmd"
-    output=$(eval $cmd 2>&1 | tee "$log_file")
+    output=$(echo $cmd 2>&1 | tee "$log_file")
+    # output=$(eval $cmd 2>&1 | tee "$log_file")
 
     all_values=$(parse_output "$output")
     echo "$MODEL_NAME,$TP,$input_len,$output_len,$batch_size,$all_values" >> "$output_csv"
