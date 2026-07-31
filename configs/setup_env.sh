@@ -15,14 +15,14 @@ source "$CONF_FILE"
 
 # 设置默认值并计算派生变量
 export SAVE_DIR="${SAVE_DIR:-./result}"
-export MODEL_NAME="${MODEL_NAME:-$(basename "$MODEL_PATH")}"
-export WORKDIR="${WORKDIR:-$(cd "$(dirname "$CONF_FILE")/../" && pwd)}"
+export MODEL_NAME="$(basename "$MODEL_PATH")"
+export WORKDIR="${WORKDIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 export LOG_DIR="./${SAVE_DIR}/${MODEL_NAME}_${IMAGE##*:}_$(basename "$CONF_FILE" .sh)_tp${TP}_$(md5sum "$CONF_FILE" | cut -c1-8)"
 export CONTAINER_NAME="bench-${MODEL_NAME}-$(basename "$CONF_FILE" .sh)"
 
 mkdir -p "$SAVE_DIR"
-# env_file="$SAVE_DIR/env_info.txt" # 开启系统信息搜集
-# [ -f "$env_file" ] || bash utils/export_dcu_env_info.sh -o "$env_file"
+env_file="$SAVE_DIR/env_info.txt" # 开启系统信息搜集
+[ -f "$env_file" ] || bash utils/export_dcu_env_info.sh -o "$env_file"
 
 mkdir -p "$LOG_DIR"
 cp "$CONF_FILE" "$LOG_DIR/config.sh"

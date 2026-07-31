@@ -49,7 +49,7 @@ export METRICS="Mean TTFT (ms),Mean TPOT (ms),Output token throughput (tok/s),To
 # export METRICS="Mean TTFT (ms),Mean TPOT (ms),Output token throughput (tok/s),Total token throughput (tok/s),P99 TTFT (ms),P99 TPOT (ms),Acceptance rate (%),Acceptance length"
 
 export SEARCH_METRICS="Mean TTFT (ms),Mean TPOT (ms)"   # 监控的延迟指标，逗号分隔
-export SEARCH_THRESHOLDS="2000,20"                      # 对应每个指标的阈值（毫秒）
+export SEARCH_THRESHOLDS="2000,15"                      # 对应每个指标的阈值（毫秒）
 export SEARCH_START_BATCH=1                             # 起始并发数
 export SEARCH_MAX_BATCH=32                              # 最大尝试并发数
 #搜索模式参数（若设置 SEARCH_METRICS 和 SEARCH_THRESHOLDS 则启用搜索，否则为固定模式）

@@ -24,17 +24,18 @@ wait_for_port() {
 
 # ==================== 清理容器 ====================
 cleanup() {
-    echo "Cleaning up container: $CONTAINER_NAME and sleep 30"
-    docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
-    sleep 30
+    docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$" && {
+        echo "Cleaning up container: $CONTAINER_NAME and sleep 30"
+        docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+        sleep 30
+    } || echo "Container $CONTAINER_NAME does not exist, skip cleanup."
 }
 
 # ==================== 主循环 ====================
 for conf_file in "${config_files[@]}"; do
     echo "------------------- Processing configuration: $conf_file -----------------------"
-    source "$conf_file"
     source configs/setup_env.sh "$conf_file"
-    # continue
+
     cleanup
     bash run-serve.sh 2>&1 | tee "$LOG_DIR/shell-serve.log"
 
@@ -52,7 +53,7 @@ for conf_file in "${config_files[@]}"; do
         echo "Test failed for $conf_file"
     fi
 
-    # 清理容器（避免端口占用）
+    # 清理容器
     cleanup
     echo "------------------- Processing configuration: $conf_file -----------------------"
 
