@@ -1,20 +1,17 @@
 #!/bin/bash
 # 容器配置
 : "${IMAGE:=harbor.sourcefind.cn:5443/dcu/admin/base/vllm:0.18.1-ubuntu22.04-dtk26.04-py3.10-}"
-: "${CONTAINER_NAME:=he-bench-}"
-: "${WORKDIR:=/data/hehj/benchtest-}"
+: "${CONTAINER_NAME:=bench}"
+: "${WORKDIR:=/data/benchtest}"
 : "${LOG_DIR:=./logs}"
 
 # 模型与服务
-: "${MODEL_PATH:=/data/models/Qwen3.6-27B-}"
-: "${MODEL_NAME:=Qwen3.6-27B-}"
-: "${PORT:=8009-}"
-: "${TP:=2-}"
-: "${BACKEND:=vllm-}"
+: "${MODEL_PATH:=/data/models/Qwen3.6-27B}"
+: "${MODEL_NAME:=Qwen3.6-27B}"
+: "${PORT:=8009}"
+: "${TP:=2}"
+: "${BACKEND:=vllm}"
 : "${CMD:=}"
-
-IFS=',' read -r -a tp_list <<< "$TP"
-TP=${tp_list[0]}
 
 if [[ -n "$CMD" ]]; then
     CMD="$CMD"
@@ -60,8 +57,9 @@ CMD="$EXPORT_LINES"$'\n'"$CMD"
 echo $CMD
 
 mkdir -p $LOG_DIR
-docker run -itd \
+docker run -d \
     --privileged \
+    --net=host \
     --device=/dev/kfd --device=/dev/dri --device=/dev/mkfd \
     --ipc=host --shm-size=512G \
     --group-add video \
@@ -73,5 +71,4 @@ docker run -itd \
     -v $MODEL_PATH:$MODEL_PATH \
     --name="$CONTAINER_NAME" \
     "$IMAGE" \
-    /bin/bash -c "echo $CMD 2>&1 | tee $WORKDIR/$LOG_DIR/serve.log "
-    # /bin/bash -c "$CMD 2>&1 | tee $WORKDIR/$LOG_DIR/serve.log "
+    /bin/bash -c "$CMD 2>&1 | tee $WORKDIR/$LOG_DIR/serve.log "

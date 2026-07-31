@@ -22,9 +22,6 @@ log() { echo "[run-binary] $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2; }
 : "${SEARCH_START_BATCH:=1}"
 : "${SEARCH_MAX_BATCH:=1024}"
 
-IFS=',' read -r -a tp_list <<< "$TP"
-TP=${tp_list[0]}
-
 mkdir -p "$LOG_DIR"
 timestamp=$(date +%Y%m%d_%H%M%S)
 output_csv="$LOG_DIR/${MODEL_NAME}_bench_${timestamp}.csv"
@@ -98,8 +95,8 @@ run_one_test() {
     local batch_size=$1
     local input_len=$2
     local output_len=$3
-    local log_file="$LOG_DIR/${MODEL_NAME}_in${input_len}_out${output_len}_req${batch_size}_${timestamp}.log"
-    local json_file="${MODEL_NAME}_in${input_len}_out${output_len}_req${batch_size}_${timestamp}.json"
+    local log_file="$LOG_DIR/in${input_len}_out${output_len}_req${batch_size}_${timestamp}.log"
+    local json_file="in${input_len}_out${output_len}_req${batch_size}_${timestamp}.json"
     if [[ "$BACKEND" == "sglang" ]]; then
         cmd="python3 -m sglang.bench_serving  --served-model-name $MODEL_NAME --model $MODEL_PATH --dataset-name random-ids --num-prompts $batch_size --random-input-len $input_len --random-output-len $output_len --port $PORT --random-range-ratio 1 --output-file $LOG_DIR/$json_file"
     elif [[ "$BACKEND" == "vllm" ]]; then
@@ -111,7 +108,7 @@ run_one_test() {
 
     log "Executing: $cmd"
     output=$(echo $cmd 2>&1 | tee "$log_file")
-    # output=$(eval $cmd 2>&1 | tee "$log_file")
+    output=$(eval $cmd 2>&1 | tee "$log_file")
 
     all_values=$(parse_output "$output")
     echo "$MODEL_NAME,$TP,$input_len,$output_len,$batch_size,$all_values" >> "$output_csv"
@@ -125,22 +122,6 @@ run_one_test() {
     log "Summary: batch_size=$batch_size, input=$input_len, output=$output_len | $summary"
 
     echo "$all_values"   # 供搜索模式捕获
-}
-
-# ==================== 检查阈值 ====================
-check_thresholds() {
-    local values_str=$1
-    IFS=',' read -r -a val_array <<< "$values_str"
-    for i in "${!all_metrics[@]}"; do
-        local metric="${all_metrics[$i]}"
-        if [[ -n "${THRESHOLD_MAP[$metric]}" ]]; then
-            local val="${val_array[$i]}"
-            local threshold="${THRESHOLD_MAP[$metric]}"
-            [[ "$val" == "NA" ]] && return 1
-            awk -v a="$val" -v b="$threshold" 'BEGIN{exit !(a > b)}' && return 1
-        fi
-    done
-    return 0
 }
 
 # ==================== 搜索模式 ====================
